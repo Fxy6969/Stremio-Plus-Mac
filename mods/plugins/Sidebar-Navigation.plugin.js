@@ -1,7 +1,7 @@
 /**
  * @name Sidebar Navigation
  * @description Replaces the navigation bar with a floating glass tab bar on the left, in the style of visionOS: icon tabs, a "…" button for everything else, and your profile. Use instead of Horizontal Navigation.
- * @version 1.1.0
+ * @version 1.2.0
  * @author Fxy
  */
 
@@ -18,6 +18,7 @@
     addons: '<path fill="currentColor" d="M9.6 3.2a2.2 2.2 0 0 1 4.4 0V5h3.6c.8 0 1.4.6 1.4 1.4V10h-1.6a2.2 2.2 0 0 0 0 4.4H19V18c0 .8-.6 1.4-1.4 1.4H14v-1.6a2.2 2.2 0 0 0-4.4 0v1.6H6c-.8 0-1.4-.6-1.4-1.4v-3.6h1.6a2.2 2.2 0 0 0 0-4.4H4.6V6.4C4.6 5.6 5.2 5 6 5h3.6z"/>',
     settings: '<path fill="currentColor" fill-rule="evenodd" d="M10.3 2.6h3.4l.5 2.4 1.6.9 2.3-.8 1.7 2.9-1.8 1.6v1.8l1.8 1.6-1.7 2.9-2.3-.8-1.6.9-.5 2.4h-3.4l-.5-2.4-1.6-.9-2.3.8-1.7-2.9 1.8-1.6v-1.8L3.7 8l1.7-2.9 2.3.8 1.6-.9zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/>',
     fullscreen: '<path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 9V5.5C4 4.7 4.7 4 5.5 4H9M15 4h3.5c.8 0 1.5.7 1.5 1.5V9M20 15v3.5c0 .8-.7 1.5-1.5 1.5H15M9 20H5.5C4.7 20 4 19.3 4 18.5V15"/>',
+    tv: '<rect fill="none" stroke="currentColor" stroke-width="2" x="3" y="4.5" width="18" height="12.5" rx="2.5"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M8.5 20.5h7"/>',
     plus: '<path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M7.5 4.5h9a3 3 0 0 1 3 3v9a3 3 0 0 1-3 3h-9a3 3 0 0 1-3-3v-9a3 3 0 0 1 3-3zM12 8.5v7M8.5 12h7"/>',
   };
 
@@ -51,6 +52,8 @@
         const button = nav && nav.querySelector('[title*="ullscreen"], [title*="ull screen"]');
         if (button) button.click();
       } },
+    { id: "tv", label: "TV Mode", when: () => !!(window.stremioPlusShell && window.stremioPlusShell.tvMode),
+      run: () => window.stremioPlusShell.tvMode.toggle() },
     { id: "plus", label: "Stremio+", when: () => typeof window.__st_toggle === "function", run: () => window.__st_toggle() },
   ];
 

@@ -18,6 +18,12 @@ mac {
     MPV_PREFIX = $$system(brew --prefix mpv)
     INCLUDEPATH += $$MPV_PREFIX/include
     LIBS += -L$$MPV_PREFIX/lib -lmpv
+
+    # Remotes, game controllers and Now Playing (src/remotecontrol.mm)
+    OBJECTIVE_SOURCES += src/remotecontrol.mm
+    HEADERS += src/remotecontrol.h
+    LIBS += -framework AppKit -framework GameController -framework MediaPlayer
+    QMAKE_OBJECTIVE_CFLAGS += -fobjc-arc
 }
 
 win32 {

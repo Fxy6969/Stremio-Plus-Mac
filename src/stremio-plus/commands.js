@@ -92,31 +92,79 @@
     register({ id: 'app.plugins-folder', title: 'Open plugins folder', group: 'App', keywords: 'finder files', run: function () { return host.native('openFolder', 'plugins'); } });
     register({ id: 'app.themes-folder', title: 'Open themes folder', group: 'App', keywords: 'finder files', run: function () { return host.native('openFolder', 'themes'); } });
     register({ id: 'app.data-folder', title: 'Open Stremio+ data folder', group: 'App', keywords: 'finder files settings', run: function () { return host.native('openFolder', ''); } });
-    register({ id: 'app.fullscreen', title: 'Toggle full screen', group: 'App', keywords: 'fullscreen window', shortcut: 'F', stremio: true, run: function () { pressKey('f', 'KeyF', 70); } });
+    register({ id: 'app.fullscreen', title: 'Toggle full screen', group: 'App', keywords: 'fullscreen window', shortcut: 'F', stremio: true,
+        run: function () {
+            // Stremio's own full screen button (synthetic key presses are ignored)
+            var button = Array.prototype.find.call(document.querySelectorAll('[title$="ullscreen mode"]'), function (b) { return b.offsetParent !== null; });
+            if (!button) throw new Error('Full screen isn’t available here');
+            button.click();
+        } });
+
+    // Player actions. Stremio's player ignores synthetic key presses, so these
+    // talk to mpv directly (Stremio's controls follow mpv's state) or use the
+    // player's own buttons and data.
+    function playerButton(titles) {
+        var buttons = document.querySelectorAll('[class*="control-bar-buttons-container"] [class*="control-bar-button"]');
+        return Array.prototype.find.call(buttons, function (b) { return titles.indexOf(b.title) !== -1; });
+    }
+    function playerState() {
+        return Promise.resolve(window.core && window.core.getState ? window.core.getState('player') : null);
+    }
+    var PLAYER_ACTIONS = {
+        'play-pause': function () { var b = playerButton(['Play', 'Pause']); if (b) b.click(); else mpv('mpv-command', ['cycle', 'pause']); },
+        'play': function () { mpv('mpv-set-prop', ['pause', false]); },
+        'pause': function () { mpv('mpv-set-prop', ['pause', true]); },
+        'seek-forward': function (seconds) { mpv('mpv-command', ['seek', String(seconds || 10), 'relative+exact']); },
+        'seek-back': function (seconds) { mpv('mpv-command', ['seek', String(-(seconds || 10)), 'relative+exact']); },
+        'seek-to': function (seconds) { mpv('mpv-set-prop', ['time-pos', Number(seconds) || 0]); },
+        'volume-up': function () { mpv('mpv-command', ['add', 'volume', '5']); },
+        'volume-down': function () { mpv('mpv-command', ['add', 'volume', '-5']); },
+        'mute': function () { var b = playerButton(['Mute', 'Unmute']); if (b) b.click(); else mpv('mpv-command', ['cycle', 'mute']); },
+        'subs-bigger': function () { mpv('mpv-command', ['add', 'sub-scale', '0.1']); },
+        'subs-smaller': function () { mpv('mpv-command', ['add', 'sub-scale', '-0.1']); },
+        'subs-toggle': function () { mpv('mpv-command', ['cycle', 'sub-visibility']); },
+        'subs-delay-up': function () { mpv('mpv-command', ['add', 'sub-delay', '0.1']); },
+        'subs-delay-down': function () { mpv('mpv-command', ['add', 'sub-delay', '-0.1']); },
+        'speed-up': function () { mpv('mpv-command', ['multiply', 'speed', '1.1']); },
+        'speed-down': function () { mpv('mpv-command', ['multiply', 'speed', String(1 / 1.1)]); },
+        'next-episode': function () {
+            return playerState().then(function (state) {
+                var next = state && state.nextVideo;
+                var link = next && next.deepLinks && (next.deepLinks.player || next.deepLinks.metaDetailsStreams);
+                if (!link) throw new Error('There is no next episode');
+                go(link);
+            });
+        },
+        'exit': function () { history.back(); },
+    };
+    function player(action, value) {
+        if (!inPlayer()) return;
+        var run = PLAYER_ACTIONS[action];
+        if (!run) throw new Error('Unknown player action: ' + action);
+        return run(value);
+    }
 
     var PLAYER = [
-        ['play-pause', 'Play or pause', 'Space', [' ', 'Space', 32], 'resume stop'],
-        ['seek-forward', 'Skip forward', 'ArrowRight', ['ArrowRight', 'ArrowRight', 39], 'seek ahead'],
-        ['seek-back', 'Skip back', 'ArrowLeft', ['ArrowLeft', 'ArrowLeft', 37], 'seek rewind'],
-        ['volume-up', 'Volume up', 'ArrowUp', ['ArrowUp', 'ArrowUp', 38], 'louder'],
-        ['volume-down', 'Volume down', 'ArrowDown', ['ArrowDown', 'ArrowDown', 40], 'quieter'],
-        ['mute', 'Mute or unmute', 'M', ['m', 'KeyM', 77], 'silence sound'],
-        ['subs-bigger', 'Subtitles bigger', '=', ['=', 'Equal', 187], 'larger captions size'],
-        ['subs-smaller', 'Subtitles smaller', '-', ['-', 'Minus', 189], 'captions size'],
-        ['subs-toggle', 'Turn subtitles on or off', 'C', ['c', 'KeyC', 67], 'captions hide show'],
-        ['subs-delay-up', 'Subtitles later', 'H', ['h', 'KeyH', 72], 'delay sync'],
-        ['subs-delay-down', 'Subtitles earlier', 'G', ['g', 'KeyG', 71], 'delay sync'],
-        ['speed-up', 'Faster playback', ']', [']', 'BracketRight', 221], 'speed'],
-        ['speed-down', 'Slower playback', '[', ['[', 'BracketLeft', 219], 'speed'],
-        ['audio-menu', 'Show audio tracks', 'A', ['a', 'KeyA', 65], 'language dub'],
-        ['subs-menu', 'Show subtitle tracks', 'S', ['s', 'KeyS', 83], 'captions language'],
-        ['next-episode', 'Play next episode', 'Shift+N', ['N', 'KeyN', 78, true], 'skip'],
-        ['exit', 'Exit player', 'Escape', ['Escape', 'Escape', 27], 'close back'],
+        ['play-pause', 'Play or pause', 'Space', 'resume stop'],
+        ['seek-forward', 'Skip forward', 'ArrowRight', 'seek ahead'],
+        ['seek-back', 'Skip back', 'ArrowLeft', 'seek rewind'],
+        ['volume-up', 'Volume up', 'ArrowUp', 'louder'],
+        ['volume-down', 'Volume down', 'ArrowDown', 'quieter'],
+        ['mute', 'Mute or unmute', 'M', 'silence sound'],
+        ['subs-bigger', 'Subtitles bigger', '=', 'larger captions size'],
+        ['subs-smaller', 'Subtitles smaller', '-', 'captions size'],
+        ['subs-toggle', 'Turn subtitles on or off', 'C', 'captions hide show'],
+        ['subs-delay-up', 'Subtitles later', 'H', 'delay sync'],
+        ['subs-delay-down', 'Subtitles earlier', 'G', 'delay sync'],
+        ['speed-up', 'Faster playback', ']', 'speed'],
+        ['speed-down', 'Slower playback', '[', 'speed'],
+        ['next-episode', 'Play next episode', 'Shift+N', 'skip'],
+        ['exit', 'Exit player', 'Escape', 'close back'],
     ];
     PLAYER.forEach(function (p) {
         register({
-            id: 'player.' + p[0], title: p[1], group: 'Player', keywords: p[4], shortcut: p[2], stremio: true, when: inPlayer,
-            run: function () { pressKey(p[3][0], p[3][1], p[3][2], p[3][3]); },
+            id: 'player.' + p[0], title: p[1], group: 'Player', keywords: p[3], shortcut: p[2], stremio: true, when: inPlayer,
+            run: function () { return player(p[0]); },
         });
     });
     register({ id: 'player.audio-next', title: 'Switch audio track', group: 'Player', keywords: 'language dub cycle', shortcut: 'Shift+A', when: inPlayer, run: function () { mpv('mpv-command', ['cycle', 'aid']); } });
@@ -931,6 +979,7 @@
         shortcuts: shortcuts,
         pressKey: pressKey,
         mpv: mpv,
+        player: player,
         refresh: function () { return Promise.all([refreshMods(), refreshWatching()]); },
         titleSearch: titleSearch,
         quickLook: quickLook,

@@ -55,6 +55,8 @@ ApplicationWindow {
     // browser's picture-in-picture can't be used. Instead the window itself
     // becomes a small frameless player that floats above other windows in a
     // corner of the screen; host.js hides the page's UI while it is active.
+    property bool tvMode: false
+    property bool tvWasFullScreen: false
     property bool pictureInPicture: false
     property rect pipSavedGeometry
     property bool pipWasFullScreen: false
@@ -218,6 +220,22 @@ ApplicationWindow {
         function setPictureInPicture(on) {
             root.setPictureInPicture(!!on);
             return root.pictureInPicture;
+        }
+
+        // TV mode (tv.js): full screen with the page scaled up for viewing from
+        // a distance. zoom 0 picks a size from the screen width.
+        function setTvMode(on, zoom) {
+            if (on) {
+                if (!root.tvMode) root.tvWasFullScreen = root.visibility === Window.FullScreen;
+                root.tvMode = true;
+                webView.zoomFactor = zoom > 0 ? zoom : Math.max(1, Math.min(2, root.screen.width / 1400));
+                if (root.visibility !== Window.FullScreen) setFullScreen(true);
+            } else if (root.tvMode) {
+                root.tvMode = false;
+                webView.zoomFactor = 1;
+                if (!root.tvWasFullScreen) setFullScreen(false);
+            }
+            return webView.zoomFactor;
         }
 
         // Dragging the frameless picture-in-picture window from the page
@@ -569,7 +587,10 @@ ApplicationWindow {
     WebChannel {
         id: wChannel
         registeredObjects: [shellBridge]
-        Component.onCompleted: registerObject("modBridge", modBridge)
+        Component.onCompleted: {
+            registerObject("modBridge", modBridge)
+            registerObject("remoteControl", remoteControl)
+        }
     }
 
     //

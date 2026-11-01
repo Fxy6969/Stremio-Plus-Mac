@@ -936,6 +936,7 @@
         runScript('stremio-plus-commands', window.__stremioPlusCommandsSource);
         runScript('stremio-plus-tools', window.__stremioPlusToolsSource);
         runScript('stremio-plus-settings', window.__stremioPlusSettingsSource);
+        runScript('stremio-plus-tv', window.__stremioPlusTvSource);
     }
 
     // ── Picture in picture ───────────────────────────────────────────────────
@@ -1057,7 +1058,8 @@
         };
     })();
 
-    window.stremioPlusShell = Object.freeze({ pictureInPicture: pip });
+    // tv.js adds tvMode
+    window.stremioPlusShell = { pictureInPicture: pip };
 
     window.addEventListener('load', function () {
         watchPlayerTransparency();

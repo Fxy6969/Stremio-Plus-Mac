@@ -9,6 +9,7 @@
 #include "mpv.h"
 #include "screensaver.h"
 #include "modbridge.h"
+#include "remotecontrol.h"
 
 #include <QtCore/QDir>
 #include <QtCore/QFile>
@@ -54,6 +55,7 @@ void InitializeParameters(QQmlApplicationEngine *engine, MainApp &app)
         {"__stremioPlusCommandsSource", ":/stremio-plus/commands.js"},
         {"__stremioPlusToolsSource", ":/stremio-plus/tools.js"},
         {"__stremioPlusSettingsSource", ":/stremio-plus/settings.js"},
+        {"__stremioPlusTvSource", ":/stremio-plus/tv.js"},
     };
     for (const auto &[name, path] : deferred) {
         const QByteArray json = QJsonDocument(QJsonArray{readResource(path)}).toJson(QJsonDocument::Compact);
@@ -77,6 +79,7 @@ void InitializeParameters(QQmlApplicationEngine *engine, MainApp &app)
     }
     ctx->setContextProperty("webProfileName", profileName);
     ctx->setContextProperty("modBridge", new ModBridge(dataDir, &app));
+    ctx->setContextProperty("remoteControl", new RemoteControl(&app));
 
     // Set access to an object of class properties in QML context
     ctx->setContextProperty("systemTray", systemTray);
@@ -90,7 +93,9 @@ void InitializeParameters(QQmlApplicationEngine *engine, MainApp &app)
 
 int main(int argc, char **argv)
 {
-    qputenv("QTWEBENGINE_CHROMIUM_FLAGS", "--autoplay-policy=no-user-gesture-required");
+    // Media keys and Now Playing belong to the app's player (src/remotecontrol.mm),
+    // not to whatever the page is playing (a trailer, for example)
+    qputenv("QTWEBENGINE_CHROMIUM_FLAGS", "--autoplay-policy=no-user-gesture-required --disable-features=HardwareMediaKeyHandling,MediaSessionService");
 #ifdef _WIN32
     // Default to ANGLE (DirectX), because that seems to eliminate so many issues on Windows
     // Also, according to the docs here: https://wiki.qt.io/Qt_5_on_Windows_ANGLE_and_OpenGL, ANGLE is also preferrable

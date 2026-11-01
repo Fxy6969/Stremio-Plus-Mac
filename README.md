@@ -9,6 +9,7 @@ A native macOS app for [Stremio](https://www.stremio.com) with built-in mpv play
 - **Plugins and themes.** Loads Stremio Plus plugins (`.plugin.js`) and themes (`.theme.css`) from the same folder as the Electron app.
 - **The Stremio+ menu.** Press **Shift+Space** to manage plugins and themes, search movies and commands, and check how every plugin is behaving.
 - **Picture in picture.** The window turns into a small floating player that stays above other apps.
+- **TV Mode and remotes.** A full-screen, larger interface you move through with the arrow keys, a game controller or the Siri Remote. Media keys, AirPods and Control Center control the player, and Now Playing shows what's on.
 
 > Proof of concept. Development builds link Homebrew's Qt and mpv and are not yet redistributable (see [Not done yet](#not-done-yet)).
 
@@ -34,10 +35,28 @@ They also work in the Electron app.
 | | |
 |---|---|
 | [Cinematic Details](mods/plugins/Cinematic-Details.plugin.js) | Title pages in the style of a streaming service: the trailer plays full screen behind the logo, with Watch Now (resumes the right episode), Add to Library, season tabs and episode cards. Stream lists open as a sheet. |
-| [Sidebar Navigation](mods/plugins/Sidebar-Navigation.plugin.js) | Replaces the top navigation with a floating glass tab bar: icon tabs, a "…" button for the rest, search and your profile. Use it instead of Horizontal Navigation. |
+| [Sidebar Navigation](mods/plugins/Sidebar-Navigation.plugin.js) | Replaces the top navigation with a floating glass tab bar: icon tabs, a "…" button for the rest (including TV Mode), search and your profile. Use it instead of Horizontal Navigation. |
 | [Picture in Picture](mods/plugins/Picture-in-Picture.plugin.js) | Adds a picture-in-picture button to the player. Uses the app's floating player here and the browser's in Electron. |
 | [Context Menu Fix](mods/plugins/Context-Menu-Fix.plugin.js) | Lifts menus (profile, seasons, context menus) above the page so their glass blur works. |
 | [Modern Glass](mods/themes/Modern-Glass.theme.css) | The glass theme the screenshots use, with matching styles for the plugins above. |
+
+## TV Mode and remotes
+
+![TV Mode on the Board](docs/screenshots/tv.jpg)
+
+Turn it on from the sidebar's **…** menu, the Stremio+ search (**TV Mode**) or **⌘⇧T**. The window goes full screen,
+everything is scaled for viewing from across the room, and a highlight moves between items.
+
+| | Browse | In the player |
+|---|---|---|
+| Arrow keys, D-pad, swipe on the Siri Remote | Move the highlight | ← → skip 10 seconds, ↑ ↓ volume |
+| Return, A button, click | Open | Play or pause |
+| Escape, B button, Menu / Back | Go back (on the Board: leave TV Mode) | Leave the player |
+| Play/Pause, media keys, AirPods, Control Center | | Play, pause, skip, scrub |
+
+- **Controllers.** Game controllers and the Siri Remote work through Apple's GameController framework, whenever macOS makes them available to apps. Connecting one outside TV Mode offers to turn it on.
+- **Media controls.** Play/pause, skip and scrubbing from media keys, AirPods and Control Center work in any mode, and Control Center's Now Playing shows the title, episode and artwork.
+- **For plugins.** `window.stremioPlusShell.tvMode` has `enter()`, `exit()`, `toggle()`, `isActive()` and `remote(name, value)`, which sends a remote command (`up`, `select`, `back`, `playPause`, …) for testing without a remote.
 
 ## Install
 
@@ -79,6 +98,7 @@ Plugins are JavaScript files with a metadata header:
 | Piece | What it does |
 |---|---|
 | `src/main.qml` | Window, mpv under a transparent `WebEngineView`, streaming server process, picture in picture |
+| `src/remotecontrol.mm` | Game controllers and the Siri Remote (GameController), media keys and Now Playing (MediaPlayer) |
 | `src/mpv.cpp` | Draws mpv into the window underneath Qt Quick's scene (before the web page is drawn on top) |
 | `src/shell-bridge.js` | The WebView2-style `window.chrome.webview` API Stremio Web v5 looks for, so it uses its desktop-shell mode and plays through mpv |
 | `src/modbridge.cpp` | File access for mods, limited to the data folder, plus HTTPS downloads and folder watching |
@@ -87,6 +107,7 @@ Plugins are JavaScript files with a metadata header:
 | `src/stremio-plus/panel.js` | The Stremio+ menu, copied unchanged from Stremio Plus; host.js adjusts it as it loads |
 | `src/stremio-plus/commands.js` | Search field: commands, movies and series, natural-language suggestions, clipboard links, Quick Look, keyboard shortcuts |
 | `src/stremio-plus/tools.js` | Tools tab: profiles, plugin health, conflicts, shortcuts, widgets, appearance schedule, developer console, theme editor |
+| `src/stremio-plus/tv.js` | TV Mode: focus navigation, remote commands, player control, Now Playing |
 | `src/stremio-plus/settings.js` | Reorganises the menu's Settings tab and adds the status dashboard |
 | `src/stremio-plus/widgets.js`, `color-picker.js`, `skin.css` | Widget row, colour picker, macOS look for the menu |
 
