@@ -255,11 +255,21 @@
     var query = '';
     function searchRows() {
         var q = query.trim();
-        if (q.length < 2) return Promise.resolve({ rows: [], empty: '' });
+        if (q.length < 2) {
+            // Trending: the Board's own catalogs (already loaded), else Cinemeta
+            var fromBoard = function (board, type) {
+                var c = ((board && board.catalogs) || []).find(function (x) { return x.type === type && x.content && x.content.type === 'Ready' && (x.content.content || []).length; });
+                return c ? Promise.resolve(c.content.content.map(function (m) { return title(m); })) : fetchMetas(CINEMETA + 'catalog/' + type + '/top.json');
+            };
+            return getState('board').then(function (board) { return Promise.all([fromBoard(board, 'movie'), fromBoard(board, 'series')]); }).then(function (r) {
+                return { rows: [{ id: 'trend-movies', title: 'Trending Movies', items: r[0].slice(0, 20) }, { id: 'trend-series', title: 'Trending Series', items: r[1].slice(0, 20) }] };
+            });
+        }
         var extra = 'search=' + encodeURIComponent(q);
+        var failed = 0;
         return Promise.all(['movie', 'series'].map(function (type) {
             return fetch(CINEMETA + 'catalog/' + type + '/top/' + extra + '.json').then(function (r) { return r.json(); })
-                .then(function (d) { return (d.metas || []).map(function (m) { return title(m); }); }).catch(function () { return []; });
+                .then(function (d) { return (d.metas || []).map(function (m) { return title(m); }); }).catch(function () { failed++; return []; });
         })).then(function (r) {
             // Top Results: the best of both kinds, then each kind
             var top = [];
@@ -267,7 +277,7 @@
             return {
                 rows: [{ id: 'top', title: 'Top Results', items: top.slice(0, 8) }, { id: 'movies', title: 'Movies', items: r[0] }, { id: 'series', title: 'Series', items: r[1] }]
                     .filter(function (x) { return x.items.length; }),
-                empty: 'No results for “' + q + '”.',
+                empty: failed === 2 ? 'Search isn’t available right now. Check your connection and try again.' : 'No results for “' + q + '”.',
             };
         });
     }
@@ -342,7 +352,7 @@
         browseTrack = h('div', 'tvui-track');
         emptyNote = h('div', 'tvui-empty');
         rowsBox.append(browseTrack, emptyNote);
-        browseEl.append(billboard, rowsBox);
+        browseEl.append(billboard, rowsBox, buildSearchPane());
 
         // Title page
         detailEl = h('div', 'tvui-detail');
@@ -428,7 +438,6 @@
     var view = 'home';
     var viewMemory = {};
     var renderToken = 0;
-    var searchHead = null, searchField = null;
     var tabTimer = null;
 
     var browse = new Screen({
@@ -445,8 +454,7 @@
             return s.rowTop(i) - s.rowTop(1);
         },
         onFocus: function (el, row) {
-            root.classList.toggle('tvui-tabs-hidden', !row.fixed);
-            if (searchHead) searchHead.classList.toggle('past', view === 'search' && !row.fixed && !row.keys);
+            if (view === 'search') searchZone = 'rows';
             if (!row.fixed) browse.cols.tabs = TABS.findIndex(function (t) { return t.id === view; });
             if (row.fixed) {
                 var tab = el.dataset.tab;
@@ -462,10 +470,14 @@
         return { id: 'tabs', el: tabsBar, items: Array.prototype.slice.call(tabsBar.querySelectorAll('.tvui-tab')), fixed: true, remember: true };
     }
 
+    var pendingTab = null;
     function chooseTab(id, selected) {
+        // From a title page, a tab goes back to browsing first
+        if (mode !== 'browse' && id !== 'exit' && id !== 'settings') { pendingTab = id; go('#/'); return; }
         if (id === 'exit') { if (window.stremioPlusShell && window.stremioPlusShell.tvMode) window.stremioPlusShell.tvMode.exit(); return; }
         if (id === 'settings') { if (selected) go('#/settings'); return; }
         if (view !== id) {
+            if (id === 'search') searchZone = 'kb';
             viewMemory[view] = { rowIndex: browse.rowIndex, cols: browse.cols };
             view = id;
             var memory = viewMemory[id] || { rowIndex: 0, cols: {} };
@@ -474,7 +486,8 @@
             renderBrowse(true);
         }
         // Choosing a tab with the remote goes down into it
-        if (selected && browse.rows.length > 1) { browse.rowIndex = 1; browse.focus(); }
+        if (selected && id === 'search') { searchZone = 'kb'; kb.focus(); }
+        else if (selected && browse.rows.length > 1) { browse.rowIndex = 1; browse.focus(); }
     }
 
     function renderBrowse(reset) {
@@ -485,10 +498,8 @@
         tabsBar.querySelectorAll('.tvui-tab').forEach(function (b) { b.classList.toggle('current', b.dataset.tab === view); });
         if (reset) emptyNote.textContent = '';
         if (view === 'search') { clearBillboard(); setBackdrop(null); }
-        if (reset) {
-            if (view === 'search') setBrowseRows([], true);
-            else { browseTrack.replaceChildren(); browse.rows = browse.rows.length ? [tabsRow()] : []; }
-        }
+        if (reset) { browseTrack.replaceChildren(); browse.rows = [tabsRow()]; }
+        if (view === 'search') renderKeys();
         var load = view === 'home' ? homeRows() : view === 'movie' || view === 'series' ? typeRows(view) : view === 'library' ? libraryRows() : searchRows();
         load.then(function (result) {
             if (token !== renderToken) return;
@@ -497,39 +508,71 @@
             emptyNote.textContent = result.rows.length ? '' : (result.loading ? '' : result.empty || '');
             // Stremio fills the Board a moment after it opens
             if (result.loading && view === 'home') setTimeout(function () { if (token === renderToken && shown && mode === 'browse') renderBrowse(false); }, 900);
-            if (shown && mode === 'browse') browse.focus();
+            if (shown && mode === 'browse') focusCurrent();
         });
     }
 
-    // Search: the query, then one line of letters and one of digits (Apple TV)
-    function keyRows() {
-        if (!searchHead) {
-            searchHead = h('div', 'tvui-search-head');
-            searchField = h('div', 'tvui-search-field');
-            searchHead.appendChild(searchField);
-        }
+    // Search, as on Apple TV: a keyboard panel on the left (field, abc / ABC /
+    // #+- and a grid of keys), results on the right
+    var KEYSETS = {
+        abc: 'abcdefghijklmnopqrstuvwxyz1234567890',
+        ABC: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890',
+        sym: '&\'-:.,!?()@#+$%*/"_;=~<>[]{}|^`\\',
+    };
+    var keySet = 'abc';
+    var searchPane = null, searchField = null, keysBox = null;
+    var searchZone = 'kb';     // 'kb' (the keyboard) or 'rows' (tab bar and results)
+    var kb = new Screen({ onFocus: function () { searchZone = 'kb'; } });
+
+    function buildSearchPane() {
+        searchPane = h('div', 'tvui-spane');
+        searchField = h('div', 'tvui-sfield');
+        keysBox = h('div', 'tvui-keysbox');
+        searchPane.append(searchField, keysBox);
+        return searchPane;
+    }
+    function renderKeys() {
         renderQuery();
-        return [
-            { id: 'keys-letters', keys: LETTERS.concat(['space', 'delete']) },
-            { id: 'keys-digits', keys: DIGITS.concat(['clear']) },
-        ].map(function (line) {
-            var el = h('div', 'tvui-row tvui-keys');
-            var strip = h('div', 'tvui-strip');
-            var items = line.keys.map(function (k) {
-                var label = k === 'space' ? 'Space' : k === 'delete' ? '⌫' : k === 'clear' ? 'Clear' : k;
-                var b = h('button', 'tvui-key' + (k.length > 1 ? ' wide' : ''), label);
-                if (k === 'delete') b.setAttribute('aria-label', 'Delete');
+        var rows = [];
+        var segs = h('div', 'tvui-segs');
+        var segItems = [['abc', 'abc'], ['ABC', 'ABC'], ['sym', '#+-']].map(function (x) {
+            var b = h('button', 'tvui-seg' + (keySet === x[0] ? ' on' : ''), x[1]);
+            b.addEventListener('click', function () { keySet = x[0]; kb.cols.segs = ['abc', 'ABC', 'sym'].indexOf(x[0]); renderKeys(); kb.rowIndex = 0; kb.focus(); });
+            segs.appendChild(b);
+            return b;
+        });
+        rows.push({ id: 'segs', el: segs, items: segItems });
+        var keys = KEYSETS[keySet].split('');
+        var grid = h('div', 'tvui-kgrid');
+        for (var i = 0; i < keys.length; i += 6) {
+            var line = h('div', 'tvui-krow');
+            var items = keys.slice(i, i + 6).map(function (k) {
+                var b = h('button', 'tvui-k', k);
                 b.addEventListener('click', function () { typeKey(k); });
-                strip.appendChild(b);
+                line.appendChild(b);
                 return b;
             });
-            el.appendChild(strip);
-            return { id: line.id, el: el, strip: strip, items: items, keys: true };
+            grid.appendChild(line);
+            rows.push({ id: 'k' + i, el: line, items: items });
+        }
+        var actions = h('div', 'tvui-krow tvui-kact');
+        var actItems = [['space', 'Space'], ['delete', '⌫'], ['clear', 'Clear']].map(function (x) {
+            var b = h('button', 'tvui-k act', x[1]);
+            if (x[0] === 'delete') b.setAttribute('aria-label', 'Delete');
+            b.addEventListener('click', function () { typeKey(x[0]); });
+            actions.appendChild(b);
+            return b;
         });
+        rows.push({ id: 'actions', el: actions, items: actItems });
+        keysBox.replaceChildren(segs, grid, actions);
+        var row = kb.rows[kb.rowIndex];
+        kb.setRows(rows);
+        if (searchZone === 'kb' && view === 'search' && mode === 'browse' && shown && row) kb.focus();
     }
     function renderQuery() {
         if (!searchField) return;
-        searchField.textContent = query || 'Movies and series';
+        searchField.innerHTML = svg('search');
+        searchField.appendChild(h('span', null, query || 'Search'));
         searchField.classList.toggle('placeholder', !query);
     }
     function typeKey(k) {
@@ -546,24 +589,37 @@
         searchTimer = setTimeout(function () { if (view === 'search') renderBrowse(false); }, 450);
     }
 
-    var keyRowsCache = null;
-    function setBrowseRows(data, keysOnly) {
+    function setBrowseRows(data) {
         browseTrack.replaceChildren();
         var rows = [tabsRow()];
-        if (view === 'search') {
-            if (!keyRowsCache) keyRowsCache = keyRows();
-            renderQuery();
-            browseTrack.appendChild(searchHead);
-            keyRowsCache.forEach(function (r) { browseTrack.appendChild(r.el); rows.push(r); });
-        }
-        if (!keysOnly) data.forEach(function (d) {
+        data.forEach(function (d) {
+            if (!d.items.length) return;
             var r = cardRow(d.id, d.title, d.items);
             browseTrack.appendChild(r.el);
             rows.push(r);
         });
-        if (view === 'search') browseTrack.appendChild(emptyNote); else rowsBox.appendChild(emptyNote);
-        emptyNote.classList.toggle('inline', view === 'search');
+        rowsBox.appendChild(emptyNote);
         browse.setRows(rows);
+    }
+
+    function focusCurrent() {
+        if (!shown) return;
+        if (mode === 'browse' && view === 'search' && searchZone === 'kb' && !sheetOpen) { kb.active = true; kb.focus(); return; }
+        screen().focus();
+    }
+
+    // Moving between the keyboard, the tab bar and the results
+    function searchMove(dir) {
+        if (searchZone === 'kb') {
+            if (kb.move(dir)) return;
+            if (dir === 'up') { searchZone = 'rows'; browse.rowIndex = 0; browse.focus(); }
+            else if (dir === 'right' && browse.rows.length > 1) { searchZone = 'rows'; browse.rowIndex = 1; browse.focus(); }
+            return;
+        }
+        var row = browse.rows[browse.rowIndex];
+        if (browse.rowIndex === 0 && dir === 'down') { searchZone = 'kb'; kb.focus(); return; }
+        if (row && browse.rowIndex > 0 && dir === 'left' && !(browse.cols[row.id] > 0)) { searchZone = 'kb'; kb.focus(); return; }
+        browse.move(dir);
     }
 
     // ── Billboard ────────────────────────────────────────────────────────────
@@ -620,7 +676,7 @@
     var seasonTimer = null, shownSeason = null, episodesRow = null;
     var detail = new Screen({
         // The actions sit in the hero; rows below scroll up to a third of the way down
-        anchor: function (i, s) { return i === 0 ? 0 : s.rowTop(i) - window.innerHeight * 0.3; },
+        anchor: function (i, s) { return i <= 1 ? 0 : s.rowTop(i) - window.innerHeight * 0.3; },
         onFocus: function (el, row) {
             if (row.id === 'seasons' && el.dataset.season !== String(shownSeason)) {
                 clearTimeout(seasonTimer);
@@ -673,7 +729,7 @@
         var key = r.type + '/' + r.id;
         if (detailKey !== key) {
             detailKey = key;
-            detail.rowIndex = 0; detail.cols = {}; detail.rows = [];
+            detail.rowIndex = 1; detail.cols = {}; detail.rows = [];
             detailTrack.replaceChildren(h('div', 'tvui-loading'));
             stopTrailer();
             currentTrailerId = null;
@@ -691,7 +747,9 @@
         var meta = data.meta, t = title(meta);
         setBackdrop(t.background);
         detailTrack.replaceChildren();
-        var rows = [];
+        // The tab bar stays on top of title pages too
+        detail.cols.tabs = TABS.findIndex(function (x) { return x.id === view; });
+        var rows = [tabsRow()];
 
         var hero = h('section', 'tvui-hero');
         var content = h('div', 'tvui-hero-content');
@@ -899,8 +957,16 @@
             if (mode === 'browse') { stopTrailer(); detailKey = null; billboardFor = null; backdropUrl = null; }
         }
         browse.active = mode === 'browse';
+        kb.active = mode === 'browse' && view === 'search';
         detail.active = mode === 'detail' && !sheetOpen;
         sheet.active = sheetOpen;
+        if (mode === 'browse' && pendingTab) {
+            var tab = pendingTab;
+            pendingTab = null;
+            browse.cols.tabs = TABS.findIndex(function (x) { return x.id === tab; });
+            chooseTab(tab, true);
+            return;
+        }
         if (mode === 'browse') {
             renderBrowse(!browse.rows.length);
             var f = browse.item();
@@ -910,7 +976,7 @@
             if (sheetOpen) { stopTrailer(); renderSheet(r); }
             else if (wasSheet) { sheetKey = null; if (currentTrailerId && !trailer) startTrailer(currentTrailerId); }
         }
-        screen().focus();
+        focusCurrent();
     }
 
     function show() {
@@ -936,6 +1002,7 @@
 
     // ── Remote ───────────────────────────────────────────────────────────────
     function move(dir) {
+        if (mode === 'browse' && view === 'search' && !sheetOpen) return searchMove(dir);
         var s = screen();
         if (!s.rows.length) return;
         s.move(dir);
@@ -945,6 +1012,7 @@
     // Returns true when handled; otherwise tv.js goes back (or offers to leave)
     function back() {
         if (sheetOpen || mode === 'detail') return false;
+        if (view === 'search' && searchZone === 'kb') { searchZone = 'rows'; browse.rowIndex = 0; browse.cols.tabs = 0; browse.focus(); return true; }
         if (browse.rowIndex > 0) { browse.rowIndex = 0; browse.cols.tabs = TABS.findIndex(function (t) { return t.id === view; }); browse.focus(); return true; }
         if (view !== 'home') { browse.cols.tabs = 1; chooseTab('home', false); browse.focus(); return true; }
         return false;
@@ -954,10 +1022,11 @@
     function key(e) {
         if (!shown || mode !== 'browse' || e.metaKey || e.ctrlKey || e.altKey) return false;
         if (e.key.length === 1 && /[\w ]/.test(e.key)) {
-            if (view !== 'search') { browse.cols.tabs = 0; chooseTab('search', false); browse.rowIndex = 1; }
-            query += e.key.toLowerCase();
+            if (view !== 'search') { browse.cols.tabs = 0; chooseTab('search', false); }
+            query += e.key;
             searchChanged();
-            browse.focus();
+            searchZone = 'kb';
+            kb.focus();
             return true;
         }
         if (e.key === 'Backspace' && view === 'search' && query) { query = query.slice(0, -1); searchChanged(); return true; }
@@ -990,7 +1059,7 @@
         // Tab bar: centred glass bar, hidden once you move into the content
         '.tvui-tabs { position: absolute; top: 0; left: 0; right: 0; z-index: 6; display: flex; justify-content: center; padding-top: 30px;' +
         '  transition: transform .45s var(--tvui-ease), opacity .3s ease; }' +
-        '#sp-tvui.tvui-tabs-hidden .tvui-tabs, #sp-tvui.mode-detail .tvui-tabs { transform: translateY(-120%); opacity: 0; pointer-events: none; }' +
+        '#sp-tvui.tvui-sheet-open .tvui-tabs { opacity: 0; pointer-events: none; }' +
         '.tvui-tabs-inner { display: flex; align-items: center; gap: 4px; padding: 6px; border-radius: 34px;' +
         '  background: rgba(40,40,44,.55); -webkit-backdrop-filter: blur(30px) saturate(170%); backdrop-filter: blur(30px) saturate(170%);' +
         '  box-shadow: inset 0 0 0 .5px rgba(255,255,255,.14), 0 10px 30px rgba(0,0,0,.35); }' +
@@ -1110,6 +1179,24 @@
         '#sp-tvui .tvui-source.tvui-focus .tvui-source-desc, #sp-tvui .tvui-source.tvui-focus .tvui-source-addon { color: rgba(0,0,0,.6); }' +
         '#sp-tvui .tvui-source.tvui-focus .tvui-source-badge { background: rgba(0,0,0,.1); }' +
         '.tvui-sheet-note { padding: 20px 18px; font-size: 18px; line-height: 1.45; color: rgba(255,255,255,.6); }' +
+        // Search: keyboard panel on the left, results on the right
+        '.tvui-spane { display: none; position: absolute; left: var(--tvui-gutter); top: 128px; width: 320px; padding: 18px; box-sizing: border-box; border-radius: 22px;' +
+        '  background: rgba(44,44,48,.6); -webkit-backdrop-filter: blur(30px); backdrop-filter: blur(30px); box-shadow: inset 0 0 0 .5px rgba(255,255,255,.1); }' +
+        '#sp-tvui[data-view="search"] .tvui-spane { display: block; }' +
+        '#sp-tvui[data-view="search"] .tvui-rows { top: 112px; left: calc(var(--tvui-gutter) + 340px); }' +
+        '#sp-tvui[data-view="search"] .tvui-card { width: 270px; }' +
+        '.tvui-sfield { display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 14px; border-radius: 12px; background: rgba(255,255,255,.1); font-size: 22px; font-weight: 600; white-space: nowrap; overflow: hidden !important; }' +
+        '.tvui-sfield svg { flex: none; width: 20px; height: 20px; opacity: .7; }' +
+        '.tvui-sfield.placeholder span { color: rgba(255,255,255,.4); font-weight: 500; }' +
+        '.tvui-sfield:not(.placeholder)::after { content: ""; width: 2px; height: 26px; background: #fff; animation: tvui-caret 1.1s steps(1) infinite; }' +
+        '.tvui-segs { display: flex; gap: 2px; margin: 14px 0 10px; padding: 3px; border-radius: 10px; background: rgba(255,255,255,.07); }' +
+        '.tvui-seg { flex: 1; height: 32px; border-radius: 8px; text-align: center !important; font-size: 16px; font-weight: 600; color: rgba(255,255,255,.5) !important; transition: background .15s ease, transform .2s var(--tvui-ease); }' +
+        '.tvui-seg.on { background: rgba(255,255,255,.16) !important; color: #fff !important; }' +
+        '.tvui-krow { display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; }' +
+        '.tvui-kact { grid-template-columns: repeat(3, 1fr); margin-top: 6px; }' +
+        '.tvui-k { height: 46px; border-radius: 10px; text-align: center !important; font-size: 25px; font-weight: 500; color: rgba(255,255,255,.88) !important; transition: transform .2s var(--tvui-ease), background .15s ease; }' +
+        '.tvui-k.act { font-size: 15px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }' +
+        '#sp-tvui .tvui-k.tvui-focus, #sp-tvui .tvui-seg.tvui-focus { background: #fff !important; color: #000 !important; transform: scale(1.14); box-shadow: 0 8px 22px rgba(0,0,0,.45); z-index: 2; }' +
         '@keyframes tvui-in { from { opacity: 0; } }' +
         '@keyframes tvui-caret { 50% { opacity: 0; } }' +
         '@keyframes tvui-spin { to { transform: rotate(360deg); } }' +
@@ -1132,7 +1219,7 @@
         select: select,
         back: back,
         key: key,
-        focus: function () { if (shown) screen().focus(); },
+        focus: function () { focusCurrent(); },
         view: function (id) { browse.cols.tabs = TABS.findIndex(function (t) { return t.id === id; }); chooseTab(id, true); },
         // Entering TV Mode: Home, focus on the first row
         reset: function () {

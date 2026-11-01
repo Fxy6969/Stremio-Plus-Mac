@@ -46,22 +46,25 @@ They also work in the Electron app.
 
 TV Mode is Stremio laid out like the Apple TV app, for use from the couch with a remote:
 
-- **Tab bar** at the top: Search, Home, Movies, Series, My Stuff, Settings and Exit. It slides away as you move into the rows.
+- **Tab bar** at the top: Search, Home, Movies, Series, My Stuff, Settings and Exit, on every screen.
 - **Home** shows a billboard with the highlighted title's artwork, title art, rating and description, above rows of
   landscape cards: Continue Watching and your Board's catalogs. **Movies** and **Series** have Popular, Top Rated and
   genre rows; **My Stuff** has your Library.
 - **Title pages**: the trailer plays behind the title, with Play (or Resume S1 E3), Add to Library and Trailer, then
   seasons, episodes and details. Choosing an episode opens **Choose a Source** with the add-ons' streams.
-- **Player**: Stremio's controls give way to a title, Episodes / Subtitles / Audio / Sources / Next Episode buttons
-  and a large scrubber. Each button opens a panel over the video. The controls hide while the video plays.
-- **Search**: a line of letters for the remote (or just type), with Top Results, Movies and Series.
+- **Player**: Stremio's controls give way to a title, Episodes / Audio & Subtitles / Sources / Next Episode buttons
+  and a large scrubber. The controls hide while the video plays. After a moment paused, a **pause screen** shows the
+  title, quality, episode, description and time left, with Continue and Restart.
+- **Audio & Subtitles** and **Sources** open as TV lists: columns of choices with a check by the current one,
+  including your add-ons' subtitles by language and subtitle size and timing.
+- **Search**: a keyboard panel (abc, ABC, #+-) for the remote, or just type, with Trending or the results beside it.
 
 | | |
 |---|---|
 | ![Title page](docs/screenshots/tv-title.jpg) | ![Search](docs/screenshots/tv-search.jpg) |
-| A title page, with the trailer playing behind it | Search with the Apple TV keyboard |
-| ![Player controls](docs/screenshots/tv-player.jpg) | ![Episodes panel](docs/screenshots/tv-episodes.jpg) |
-| The player's controls and scrubber | Episodes, Subtitles, Audio and Sources open as panels |
+| A title page, with the trailer playing behind it | Search with the keyboard panel and Trending |
+| ![Pause screen](docs/screenshots/tv-pause.jpg) | ![Episodes panel](docs/screenshots/tv-episodes.jpg) |
+| The pause screen | Episodes in the player |
 
 Turn it on from the sidebar's **…** menu, the Stremio+ search (**TV Mode**) or **⌘⇧T**. The window goes full screen
 and everything is scaled for viewing from across the room.
