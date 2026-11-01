@@ -11,6 +11,7 @@
         <file>stremio-plus/commands.js</file>
         <file>stremio-plus/tools.js</file>
         <file>stremio-plus/settings.js</file>
+        <file>stremio-plus/tv-home.js</file>
         <file>stremio-plus/tv.js</file>
         <file alias="/images/stremio.png">../images/stremio.png</file>
         <file alias="/images/stremio_window.png">../images/stremio_window.png</file>

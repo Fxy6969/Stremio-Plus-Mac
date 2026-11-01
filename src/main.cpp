@@ -55,6 +55,7 @@ void InitializeParameters(QQmlApplicationEngine *engine, MainApp &app)
         {"__stremioPlusCommandsSource", ":/stremio-plus/commands.js"},
         {"__stremioPlusToolsSource", ":/stremio-plus/tools.js"},
         {"__stremioPlusSettingsSource", ":/stremio-plus/settings.js"},
+        {"__stremioPlusTvHomeSource", ":/stremio-plus/tv-home.js"},
         {"__stremioPlusTvSource", ":/stremio-plus/tv.js"},
     };
     for (const auto &[name, path] : deferred) {

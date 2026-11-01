@@ -20,6 +20,14 @@
     var idleTimer = null;
 
     function channel() { return window.__stremioPlusChannel; }
+    // The TV screens (tv-home.js) take over the Board while TV Mode is on
+    function tvHome() { return window.__spTvHome; }
+    function inTvHome() { var t = tvHome(); return !!(t && t.isShown() && scope() === t.element()); }
+    function syncTvHome() {
+        var t = tvHome();
+        if (!t) return;
+        if (active && isHome()) t.show(); else t.hide();
+    }
     function shell() { return channel().then(function (o) { return o.shellBridge; }); }
     function inPlayer() { return location.hash.indexOf('#/player') === 0; }
     function isHome() { var h = location.hash; return h === '' || h === '#' || h === '#/'; }
@@ -69,6 +77,7 @@
             window.__st_isOpen && window.__st_isOpen() ? document.getElementById('__st_panel__') : null,
             document.querySelector('.cd-on.cd-sheet [class*="streams-list-container"]'),
             document.querySelector('[class*="modal-container"]'),
+            tvHome() && tvHome().isShown() ? tvHome().element() : null,
         ];
         for (var i = 0; i < layers.length; i++) if (layers[i] && isVisible(layers[i])) return layers[i];
         return document.body;
@@ -158,6 +167,7 @@
 
     // First focus: the first thing in reading order, past the navigation
     function focusFirst() {
+        if (inTvHome()) return tvHome().focus();
         var root = scope();
         var list = candidates(root);
         // In a prompt, start on its main button (Allow, Save...)
@@ -178,6 +188,7 @@
     }
 
     function move(dir) {
+        if (inTvHome()) return tvHome().move(dir);
         var from = current();
         if (!from) return focusFirst();
         // Typing in a field: left and right move the text cursor
@@ -187,6 +198,7 @@
     }
 
     function select() {
+        if (inTvHome()) return tvHome().select();
         var el = current();
         if (!el) return focusFirst();
         if (el.matches('input, textarea, select')) { el.focus(); return; }
@@ -194,6 +206,7 @@
     }
 
     function back() {
+        if (inTvHome() && tvHome().back()) return;
         var root = scope();
         if (root !== document.body) {
             // Close what's on top, the way Escape does
@@ -202,6 +215,7 @@
             return;
         }
         if (isHome()) {
+            if (document.querySelector('.sp-toast')) return;
             runtime.toast({ title: 'You’re on the Board', duration: 3000, action: { label: 'Leave TV Mode', run: function () { setActive(false); } } });
             return;
         }
@@ -263,6 +277,7 @@
     var KEYS = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right', Enter: 'select', Escape: 'back' };
     function onKey(e) {
         if (!active || inPlayer() || e.metaKey || e.ctrlKey || e.altKey || !e.isTrusted) return;
+        if (inTvHome() && tvHome().key(e)) { e.preventDefault(); e.stopImmediatePropagation(); markIdle(); return; }
         var name = KEYS[e.key];
         var typing = document.activeElement && document.activeElement.matches('input, textarea');
         if (e.key === 'Backspace' && !typing) name = 'back';
@@ -346,13 +361,16 @@
         if (on === active) return Promise.resolve(active);
         active = on;
         document.documentElement.classList.toggle('sp-tv', on);
+        if (on && !inPlayer() && location.hash.indexOf('#/detail') !== 0) location.hash = '/';
+        if (on && tvHome()) tvHome().reset();
+        syncTvHome();
         if (!on) {
             document.documentElement.classList.remove('sp-tv-idle');
             if (focused) focused.classList.remove('sp-tv-focus');
             focused = null;
             stopRepeat();
         }
-        runtime.toast({ title: on ? 'TV Mode' : 'TV Mode off', message: on ? 'Arrows or the remote move, Return selects, Escape goes back.' : null, duration: 2600 });
+        runtime.toast({ title: on ? 'TV Mode' : 'TV Mode off', message: on ? 'Use the arrow keys or a remote. Escape goes back.' : null, duration: 2600 });
         return shell().then(function (b) { b.setTvMode(on, 0); return active; }).then(function () {
             if (on) setTimeout(focusFirst, 500);
             return active;
@@ -368,6 +386,7 @@
         window.addEventListener('keydown', onKey, true);
         window.addEventListener('mousemove', onPointer, { passive: true });
         window.addEventListener('hashchange', function () {
+            syncTvHome();
             if (!inPlayer()) clearNowPlaying();
             if (active && !inPlayer()) setTimeout(function () { if (!current()) focusFirst(); }, 600);
         });

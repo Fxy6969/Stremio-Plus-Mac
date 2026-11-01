@@ -42,16 +42,30 @@ They also work in the Electron app.
 
 ## TV Mode and remotes
 
-![TV Mode on the Board](docs/screenshots/tv.jpg)
+![TV Mode Home: billboard and rows](docs/screenshots/tv-home.jpg)
 
-Turn it on from the sidebar's **…** menu, the Stremio+ search (**TV Mode**) or **⌘⇧T**. The window goes full screen,
-everything is scaled for viewing from across the room, and a highlight moves between items.
+TV Mode is Stremio laid out like the streaming apps on Apple TV. A billboard shows the highlighted title's artwork,
+title art, rating and description, with rows of landscape cards underneath. A side menu opens with labels when you
+move into it, holding **Search**, **Home**, **Movies**, **Series**, **My Stuff**, **Settings** and **Exit TV Mode**.
+Opening a title goes to its page (with Cinematic Details, the trailer page), and Back returns to the same card.
+
+| | |
+|---|---|
+| ![The side menu](docs/screenshots/tv-menu.jpg) | ![Search with the on-screen keyboard](docs/screenshots/tv-search.jpg) |
+| The side menu opens with labels | Search with an on-screen keyboard for remotes, or just type |
+
+- **Home** has Continue Watching and the rows from your Board (your add-ons' catalogs).
+- **Movies** and **Series** have Popular, Top Rated and genre rows.
+- **My Stuff** has Continue Watching and your Library.
+
+Turn it on from the sidebar's **…** menu, the Stremio+ search (**TV Mode**) or **⌘⇧T**. The window goes full screen
+and everything is scaled for viewing from across the room.
 
 | | Browse | In the player |
 |---|---|---|
 | Arrow keys, D-pad, swipe on the Siri Remote | Move the highlight | ← → skip 10 seconds, ↑ ↓ volume |
 | Return, A button, click | Open | Play or pause |
-| Escape, B button, Menu / Back | Go back (on the Board: leave TV Mode) | Leave the player |
+| Escape, B button, Menu / Back | Go back; from the rows, open the side menu | Leave the player |
 | Play/Pause, media keys, AirPods, Control Center | | Play, pause, skip, scrub |
 
 - **Controllers.** Game controllers and the Siri Remote work through Apple's GameController framework, whenever macOS makes them available to apps. Connecting one outside TV Mode offers to turn it on.
@@ -108,6 +122,7 @@ Plugins are JavaScript files with a metadata header:
 | `src/stremio-plus/commands.js` | Search field: commands, movies and series, natural-language suggestions, clipboard links, Quick Look, keyboard shortcuts |
 | `src/stremio-plus/tools.js` | Tools tab: profiles, plugin health, conflicts, shortcuts, widgets, appearance schedule, developer console, theme editor |
 | `src/stremio-plus/tv.js` | TV Mode: focus navigation, remote commands, player control, Now Playing |
+| `src/stremio-plus/tv-home.js` | TV Mode's screens: billboard, rows, side menu, Movies, Series, My Stuff, Search |
 | `src/stremio-plus/settings.js` | Reorganises the menu's Settings tab and adds the status dashboard |
 | `src/stremio-plus/widgets.js`, `color-picker.js`, `skin.css` | Widget row, colour picker, macOS look for the menu |
 
