@@ -23,10 +23,11 @@
     // The TV screens (tv-home.js) take over the Board while TV Mode is on
     function tvHome() { return window.__spTvHome; }
     function inTvHome() { var t = tvHome(); return !!(t && t.isShown() && scope() === t.element()); }
+    function tvPlayer() { return window.__spTvPlayer; }
     function syncTvHome() {
-        var t = tvHome();
-        if (!t) return;
-        if (active && isHome()) t.show(); else t.hide();
+        var t = tvHome(), p = tvPlayer();
+        if (t) { if (active && (isHome() || /^#\/detail\//.test(location.hash))) t.show(); else t.hide(); }
+        if (p) { if (active && inPlayer()) p.show(); else p.hide(); }
     }
     function shell() { return channel().then(function (o) { return o.shellBridge; }); }
     function inPlayer() { return location.hash.indexOf('#/player') === 0; }
@@ -206,9 +207,12 @@
     }
 
     function back() {
-        if (inTvHome() && tvHome().back()) return;
+        if (inTvHome()) {
+            if (tvHome().back()) return;
+            if (!isHome()) return history.back();
+        }
         var root = scope();
-        if (root !== document.body) {
+        if (root !== document.body && !inTvHome()) {
             // Close what's on top, the way Escape does
             if (root.id === '__st_panel__' && window.__st_toggle) return window.__st_toggle();
             commands.pressKey('Escape', 'Escape', 27);
@@ -216,7 +220,7 @@
         }
         if (isHome()) {
             if (document.querySelector('.sp-toast')) return;
-            runtime.toast({ title: 'You’re on the Board', duration: 3000, action: { label: 'Leave TV Mode', run: function () { setActive(false); } } });
+            runtime.toast({ title: 'Leave TV Mode?', duration: 3000, action: { label: 'Leave', run: function () { setActive(false); } } });
             return;
         }
         history.back();
@@ -247,6 +251,8 @@
 
     function handle(name, value) {
         markIdle();
+        // TV Mode's player has its own controls
+        if (active && inPlayer() && tvPlayer()) return tvPlayer().handle(name, value);
         var direction = name === 'up' || name === 'down' || name === 'left' || name === 'right';
         if (direction && value === false) return stopRepeat();
         if (inPlayer()) {
@@ -275,7 +281,15 @@
 
     // Keyboard in TV mode works like a remote (arrow keys, Return, Escape)
     var KEYS = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right', Enter: 'select', Escape: 'back' };
+    var PLAYER_KEYS = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right', Enter: 'select', Escape: 'back', Backspace: 'back', ' ': 'playPause' };
     function onKey(e) {
+        if (active && inPlayer() && tvPlayer() && e.isTrusted && !e.metaKey && !e.ctrlKey && !e.altKey && PLAYER_KEYS[e.key]) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            markIdle();
+            tvPlayer().handle(PLAYER_KEYS[e.key], true);
+            return;
+        }
         if (!active || inPlayer() || e.metaKey || e.ctrlKey || e.altKey || !e.isTrusted) return;
         if (inTvHome() && tvHome().key(e)) { e.preventDefault(); e.stopImmediatePropagation(); markIdle(); return; }
         var name = KEYS[e.key];
@@ -308,7 +322,8 @@
         return Promise.resolve(window.core && window.core.getState ? window.core.getState('player') : null)
             .then(function (s) { state = s; }, function () {})
             .then(function () {
-                var meta = state && state.metaItem && state.metaItem.content && state.metaItem.content.content;
+                var item = state && state.metaItem && (state.metaItem.type ? state.metaItem : state.metaItem.content);
+                var meta = item && item.type === 'Ready' ? item.content : null;
                 var video = state && state.selected && state.selected.streamRequest && meta && meta.videos
                     ? meta.videos.find(function (v) { return state.selected.streamRequest.path && v.id === state.selected.streamRequest.path.id; })
                     : null;

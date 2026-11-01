@@ -42,30 +42,35 @@ They also work in the Electron app.
 
 ## TV Mode and remotes
 
-![TV Mode Home: billboard and rows](docs/screenshots/tv-home.jpg)
+![TV Mode Home: tab bar, billboard and rows](docs/screenshots/tv-home.jpg)
 
-TV Mode is Stremio laid out like the streaming apps on Apple TV. A billboard shows the highlighted title's artwork,
-title art, rating and description, with rows of landscape cards underneath. A side menu opens with labels when you
-move into it, holding **Search**, **Home**, **Movies**, **Series**, **My Stuff**, **Settings** and **Exit TV Mode**.
-Opening a title goes to its page (with Cinematic Details, the trailer page), and Back returns to the same card.
+TV Mode is Stremio laid out like the Apple TV app, for use from the couch with a remote:
+
+- **Tab bar** at the top: Search, Home, Movies, Series, My Stuff, Settings and Exit. It slides away as you move into the rows.
+- **Home** shows a billboard with the highlighted title's artwork, title art, rating and description, above rows of
+  landscape cards: Continue Watching and your Board's catalogs. **Movies** and **Series** have Popular, Top Rated and
+  genre rows; **My Stuff** has your Library.
+- **Title pages**: the trailer plays behind the title, with Play (or Resume S1 E3), Add to Library and Trailer, then
+  seasons, episodes and details. Choosing an episode opens **Choose a Source** with the add-ons' streams.
+- **Player**: Stremio's controls give way to a title, Episodes / Subtitles / Audio / Sources / Next Episode buttons
+  and a large scrubber. Each button opens a panel over the video. The controls hide while the video plays.
+- **Search**: a line of letters for the remote (or just type), with Top Results, Movies and Series.
 
 | | |
 |---|---|
-| ![The side menu](docs/screenshots/tv-menu.jpg) | ![Search with the on-screen keyboard](docs/screenshots/tv-search.jpg) |
-| The side menu opens with labels | Search with an on-screen keyboard for remotes, or just type |
-
-- **Home** has Continue Watching and the rows from your Board (your add-ons' catalogs).
-- **Movies** and **Series** have Popular, Top Rated and genre rows.
-- **My Stuff** has Continue Watching and your Library.
+| ![Title page](docs/screenshots/tv-title.jpg) | ![Search](docs/screenshots/tv-search.jpg) |
+| A title page, with the trailer playing behind it | Search with the Apple TV keyboard |
+| ![Player controls](docs/screenshots/tv-player.jpg) | ![Episodes panel](docs/screenshots/tv-episodes.jpg) |
+| The player's controls and scrubber | Episodes, Subtitles, Audio and Sources open as panels |
 
 Turn it on from the sidebar's **…** menu, the Stremio+ search (**TV Mode**) or **⌘⇧T**. The window goes full screen
 and everything is scaled for viewing from across the room.
 
 | | Browse | In the player |
 |---|---|---|
-| Arrow keys, D-pad, swipe on the Siri Remote | Move the highlight | ← → skip 10 seconds, ↑ ↓ volume |
-| Return, A button, click | Open | Play or pause |
-| Escape, B button, Menu / Back | Go back; from the rows, open the side menu | Leave the player |
+| Arrow keys, D-pad, swipe on the Siri Remote | Move the highlight | Show the controls; ← → skip 10 seconds |
+| Return, A button, click | Open | Play or pause; choose a button |
+| Escape, B button, Menu / Back | Go back; from the rows, return to the tab bar | Hide the controls, close a panel, leave the player |
 | Play/Pause, media keys, AirPods, Control Center | | Play, pause, skip, scrub |
 
 - **Controllers.** Game controllers and the Siri Remote work through Apple's GameController framework, whenever macOS makes them available to apps. Connecting one outside TV Mode offers to turn it on.
@@ -122,7 +127,8 @@ Plugins are JavaScript files with a metadata header:
 | `src/stremio-plus/commands.js` | Search field: commands, movies and series, natural-language suggestions, clipboard links, Quick Look, keyboard shortcuts |
 | `src/stremio-plus/tools.js` | Tools tab: profiles, plugin health, conflicts, shortcuts, widgets, appearance schedule, developer console, theme editor |
 | `src/stremio-plus/tv.js` | TV Mode: focus navigation, remote commands, player control, Now Playing |
-| `src/stremio-plus/tv-home.js` | TV Mode's screens: billboard, rows, side menu, Movies, Series, My Stuff, Search |
+| `src/stremio-plus/tv-home.js` | TV Mode's screens: tab bar, billboard and rows, title pages, sources, Search |
+| `src/stremio-plus/tv-player.js` | TV Mode's player: controls, scrubber, Episodes / Subtitles / Audio / Sources panels |
 | `src/stremio-plus/settings.js` | Reorganises the menu's Settings tab and adds the status dashboard |
 | `src/stremio-plus/widgets.js`, `color-picker.js`, `skin.css` | Widget row, colour picker, macOS look for the menu |
 
