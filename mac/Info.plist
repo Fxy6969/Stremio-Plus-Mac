@@ -6,10 +6,18 @@
     <string>NSApplication</string>
     <key>CFBundleIconFile</key>
     <string>@ICON@</string>
+    <key>CFBundleName</key>
+    <string>Stremio Plus</string>
+    <key>CFBundleDisplayName</key>
+    <string>Stremio Plus</string>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.entertainment</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleGetInfoString</key>
-    <string>Stremio from Smart Code LTD @2019</string>
+    <string>Stremio Plus for macOS</string>
     <key>CFBundleSignature</key>
     <string>????</string>
     <key>CFBundleExecutable</key>
@@ -19,7 +27,7 @@
     <key>NOTE</key>
     <string>Watch Instantly All the Video Content You Enjoy in One Place</string>
     <key>NSHumanReadableCopyright</key>
-    <string>(c) 2019 Smart Code LTD</string>
+    <string>Stremio Plus. Based on stremio-shell (Smart Code LTD) and improved-stremio-shell</string>
     <key>CFBundleVersion</key>
     <string>@FULL_VERSION@</string>
     <key>CFBundleURLTypes</key>

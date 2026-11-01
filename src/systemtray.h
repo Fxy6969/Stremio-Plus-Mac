@@ -3,7 +3,7 @@
  
 #include <QtWidgets/QMenu>
 #include <QtCore/QObject>
-#include <QtWidgets/QAction>
+#include <QtGui/QAction>
 #include <QtWidgets/QSystemTrayIcon>
 #include <QtCore/QOperatingSystemVersion>
 

@@ -2,7 +2,7 @@
 #define MPVRENDERER_H_
 #define MPV_ENABLE_DEPRECATED 0
 
-#include <QtQuick/QQuickFramebufferObject>
+#include <QtQuick/QQuickItem>
 
 #include <QtCore/QObject>
 #include <QtCore/QJsonObject>
@@ -10,7 +10,6 @@
 #include <QtCore/QtGlobal>
 #include <QtGui/QOpenGLContext>
 
-#include <QtGui/QOpenGLFramebufferObject>
 
 #include <QtQuick/QQuickWindow>
 #include <QtQuick/QQuickView>
@@ -19,23 +18,18 @@
 #include <mpv/render_gl.h>
 #include "mpv_qthelper.h"
 
-class MpvRenderer;
-
-class MpvObject : public QQuickFramebufferObject
+class MpvObject : public QQuickItem
 {
     Q_OBJECT
 
     mpv_handle *mpv;
     mpv_render_context *mpv_gl;
 
-    friend class MpvRenderer;
-
 public:
     static void on_update(void *ctx);
 
     MpvObject(QQuickItem * parent = 0);
     virtual ~MpvObject();
-    virtual Renderer *createRenderer() const;
 
 public slots:
     void command(const QVariant& params);
@@ -49,6 +43,9 @@ signals:
 
 private slots:
     void doUpdate();
+    void handleWindowChanged(QQuickWindow *win);
+    void renderUnderlay();
+    void releaseGl();
     void on_mpv_events();
 
 private:

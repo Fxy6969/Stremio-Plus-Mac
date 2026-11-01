@@ -1,5 +1,5 @@
 #include <QtQml/QQmlApplicationEngine>
-#include <QtWebEngine/qtwebengineglobal.h>
+#include <QtWebEngineQuick/qtwebenginequickglobal.h>
 #include <QtCore/QSysInfo>
 #include <QtWidgets/QApplication>
 #include <QtQml/QQmlEngine>
@@ -14,7 +14,7 @@ class MainApp : public QApplication
     Q_OBJECT
 
   public: 
-    MainApp(int &argc, char **argv, bool unique) : QApplication(argc, argv, unique) {};
+    MainApp(int &argc, char **argv) : QApplication(argc, argv) {};
 
     protected:
     bool event (QEvent *event) 

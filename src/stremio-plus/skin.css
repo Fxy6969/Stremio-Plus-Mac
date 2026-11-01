@@ -1,0 +1,241 @@
+/* Stremio+ "Mac" skin: a clean, neutral macOS look layered over panel.js.
+   Every rule is scoped under #__st_root__ so it wins over the menu's own styles. */
+
+#__st_root__ {
+    --accent: rgba(255, 255, 255, 0.92) !important;
+    --accent-soft: rgba(255, 255, 255, 0.09) !important;
+    --accent-glow: transparent !important;
+    --st-accent: rgba(255, 255, 255, 0.92) !important;
+    --st-accent-glow: transparent !important;
+    --sp-switch-on: #30d158;
+    --sp-hairline: rgba(255, 255, 255, 0.09);
+    --sp-row-hover: rgba(255, 255, 255, 0.06);
+    --sp-row-active: rgba(255, 255, 255, 0.1);
+    --sp-text: rgba(255, 255, 255, 0.92);
+    --sp-text-2: rgba(255, 255, 255, 0.55);
+    --sp-text-3: rgba(255, 255, 255, 0.35);
+}
+
+#__st_root__ * {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif !important;
+    -webkit-font-smoothing: antialiased !important;
+}
+
+/* ── Window ─────────────────────────────────────────────────────────────── */
+#__st_root__ #__st_overlay__.open { background: rgba(0, 0, 0, 0.22) !important; }
+
+#__st_root__ #__st_panel__,
+#__st_root__ .onb-panel {
+    width: min(780px, calc(100vw - 40px)) !important;
+    border-radius: 16px !important;
+    background: rgba(30, 30, 32, 0.66) !important;
+    background-image: none !important;
+    backdrop-filter: blur(36px) saturate(170%) !important;
+    -webkit-backdrop-filter: blur(36px) saturate(170%) !important;
+    border: 0.5px solid rgba(255, 255, 255, 0.14) !important;
+    box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.6), 0 24px 70px rgba(0, 0, 0, 0.45) !important;
+}
+
+#__st_root__ #__st_panel__::before,
+#__st_root__ #__st_panel__.sp-grain::after,
+#__st_root__ .onb-panel::after { display: none !important; }
+
+#__st_root__.no-blur #__st_panel__ { background: rgba(30, 30, 32, 0.97) !important; }
+
+/* ── Search ─────────────────────────────────────────────────────────────── */
+#__st_root__ .st-search-row {
+    padding: 16px 20px !important;
+    border-bottom: 0.5px solid var(--sp-hairline) !important;
+}
+#__st_root__ .st-search-icon { display: none !important; }
+#__st_root__ .st-search-input,
+#__st_root__ .st-search-ghost {
+    font-size: 14px !important;
+    font-weight: 400 !important;
+    letter-spacing: 0 !important;
+}
+#__st_root__ .st-search-input { color: var(--sp-text) !important; caret-color: #fff !important; }
+#__st_root__ .st-search-input::placeholder { color: var(--sp-text-3) !important; }
+
+#__st_root__ .st-kbd,
+#__st_root__ .sp-kbd {
+    background: rgba(255, 255, 255, 0.07) !important;
+    border: 0.5px solid rgba(255, 255, 255, 0.14) !important;
+    border-radius: 5px !important;
+    color: var(--sp-text-2) !important;
+    box-shadow: none !important;
+}
+
+/* ── Tabs: plain section switcher ───────────────────────────────────────── */
+#__st_root__ .st-tabs {
+    padding: 8px 12px !important;
+    border-bottom: 0.5px solid var(--sp-hairline) !important;
+}
+#__st_root__ .st-tab {
+    font-size: 12.5px !important;
+    font-weight: 500 !important;
+    color: var(--sp-text-2) !important;
+    border-radius: 7px !important;
+    padding: 6px 10px !important;
+}
+#__st_root__ .st-tab:hover { color: var(--sp-text) !important; background: var(--sp-row-hover) !important; }
+#__st_root__ .st-tab.active { color: var(--sp-text) !important; background: var(--sp-row-active) !important; }
+#__st_root__ .st-tab-indicator { display: none !important; }
+#__st_root__ .st-tab-count,
+#__st_root__ .st-tab.active .st-tab-count {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: var(--sp-text-2) !important;
+}
+#__st_root__ .sp-new-dot { background: var(--sp-text-2) !important; box-shadow: none !important; }
+
+/* ── Rows ───────────────────────────────────────────────────────────────── */
+#__st_root__ .st-list { padding: 8px !important; }
+#__st_root__ .st-card {
+    background: transparent !important;
+    border: none !important;
+    border-radius: 10px !important;
+    margin-bottom: 1px !important;
+    box-shadow: none !important;
+    transform: none !important;
+}
+#__st_root__ .st-card:hover { background: var(--sp-row-hover) !important; }
+#__st_root__ .st-card.expanded,
+#__st_root__ .st-card.selected,
+#__st_root__ .st-card.kbd-focus { background: var(--sp-row-active) !important; }
+
+/* Logos: neutral glass tiles instead of per-plugin hues */
+#__st_root__ .st-card-icon,
+#__st_root__ .sp-theme-logo {
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 8px !important;
+    background: rgba(255, 255, 255, 0.09) !important;
+    background-image: none !important;
+    border: 0.5px solid rgba(255, 255, 255, 0.14) !important;
+    box-shadow: none !important;
+    color: rgba(255, 255, 255, 0.85) !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.01em !important;
+}
+#__st_root__ .sp-theme-logo-glow { display: none !important; }
+#__st_root__ .sp-theme-logo-mark { color: rgba(255, 255, 255, 0.85) !important; text-shadow: none !important; font-size: 12px !important; }
+#__st_root__ .st-card.expanded .st-card-icon,
+#__st_root__ .st-card.expanded .sp-theme-logo { background: rgba(255, 255, 255, 0.14) !important; }
+#__st_root__ .st-card-name { font-size: 13.5px !important; font-weight: 500 !important; color: var(--sp-text) !important; }
+#__st_root__ .st-card-desc { color: var(--sp-text-2) !important; }
+#__st_root__ .st-card-meta,
+#__st_root__ .st-card-meta > span { color: var(--sp-text-3) !important; }
+#__st_root__ .st-card.expanded .st-chevron { color: var(--sp-text-2) !important; }
+
+#__st_root__ .st-settings-panel {
+    background: rgba(0, 0, 0, 0.16) !important;
+    border: 0.5px solid var(--sp-hairline) !important;
+}
+
+/* ── Switches: macOS green, no halo ─────────────────────────────────────── */
+#__st_root__ .st-toggle,
+#__st_root__ .sp-toggle,
+#__st_root__ .st-compact-toggle { box-shadow: none !important; }
+#__st_root__ .st-toggle.on,
+#__st_root__ .sp-toggle.on,
+#__st_root__ .st-compact-toggle.on,
+#__st_root__ #__st_about_wrap__ .sp-toggle.on {
+    background: var(--sp-switch-on) !important;
+    border-color: var(--sp-switch-on) !important;
+    box-shadow: none !important;
+}
+
+/* ── Buttons: light fill, dark text (accent is white now) ───────────────── */
+#__st_root__ .onb-cta,
+#__st_root__ .onb-accent-btn,
+#__st_root__ .sp-export-btn.primary,
+#__st_root__ .st-editor-apply {
+    background: rgba(255, 255, 255, 0.92) !important;
+    background-image: none !important;
+    color: #111 !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+}
+
+/* ── Footer bar ─────────────────────────────────────────────────────────── */
+#__st_root__ .st-footer,
+#__st_root__ .sp-footer {
+    background: rgba(255, 255, 255, 0.03) !important;
+    border-top: 0.5px solid var(--sp-hairline) !important;
+}
+#__st_root__ .sp-foot-btn { color: var(--sp-text-2) !important; font-size: 11.5px !important; }
+#__st_root__ .sp-foot-btn:hover { color: var(--sp-text) !important; background: var(--sp-row-hover) !important; }
+
+/* ── Onboarding: drop the coloured glow and floating logo ───────────────── */
+#__st_root__ .onb-logo {
+    background: rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.2) inset !important;
+    animation: none !important;
+}
+#__st_root__ .onb-rail-dot.active::after { background: rgba(255, 255, 255, 0.85) !important; box-shadow: none !important; }
+#__st_root__ .onb-install-fill { background: rgba(255, 255, 255, 0.25) !important; box-shadow: none !important; }
+#__st_root__ .onb-theme-preview { background: linear-gradient(140deg, #1c1c1e 0%, #2c2c2e 100%) !important; }
+
+/* Status dots keep their meaning but lose the glow */
+#__st_root__ .sp-health-dot { box-shadow: none !important; }
+
+/* Permission tags: neutral instead of per-permission colours */
+#__st_root__ .sp-perm {
+    background: rgba(255, 255, 255, 0.07) !important;
+    border: 0.5px solid rgba(255, 255, 255, 0.12) !important;
+    color: var(--sp-text-2) !important;
+}
+
+/* ── Motion (Apple: no overshoot for a menu that wasn't flicked) ───────────
+   Opens and closes along the same path: a small scale + fade, critically damped. */
+#__st_root__ #__st_panel__ {
+    transform: translateX(-50%) translateY(calc(-50% + 6px)) scale(0.97) !important;
+    transition: opacity 0.2s ease, transform 0.32s cubic-bezier(0.32, 0.72, 0, 1) !important;
+}
+#__st_root__ #__st_overlay__.open #__st_panel__ { transform: translateX(-50%) translateY(-50%) scale(1) !important; }
+#__st_root__ #__st_overlay__.closing #__st_panel__ { animation: sp-panel-close 0.18s ease-in forwards !important; }
+@keyframes sp-panel-close {
+    from { opacity: 1; transform: translateX(-50%) translateY(-50%) scale(1); }
+    to   { opacity: 0; transform: translateX(-50%) translateY(calc(-50% + 6px)) scale(0.97); }
+}
+
+/* Instant press feedback on everything clickable */
+#__st_root__ .st-card-main:active,
+#__st_root__ .st-tab:active,
+#__st_root__ .sp-foot-btn:active,
+#__st_root__ button:active { transform: scale(0.98) !important; transition: transform 80ms ease-out !important; }
+#__st_root__ .st-toggle:active::after { width: 16px !important; }
+
+/* Lists animate in without bouncing */
+#__st_root__ .st-list { animation-timing-function: cubic-bezier(0.32, 0.72, 0, 1) !important; }
+
+/* ── Accessibility settings ─────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+    #__st_root__ #__st_panel__,
+    #__st_root__ #__st_overlay__.open #__st_panel__ { transform: translateX(-50%) translateY(-50%) !important; transition: opacity 0.15s ease !important; }
+    #__st_root__ #__st_overlay__.closing #__st_panel__ { animation: none !important; opacity: 0 !important; }
+    #__st_root__ *, #__st_root__ *::after { animation-duration: 0.01ms !important; }
+}
+@media (prefers-reduced-transparency: reduce) {
+    #__st_root__ #__st_panel__,
+    #__st_root__ .onb-panel { background: rgb(36, 36, 38) !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+}
+@media (prefers-contrast: more) {
+    #__st_root__ #__st_panel__ { background: rgb(28, 28, 30) !important; border-color: rgba(255, 255, 255, 0.4) !important; }
+    #__st_root__ { --sp-text-2: rgba(255, 255, 255, 0.8); --sp-text-3: rgba(255, 255, 255, 0.65); }
+}
+
+/* ── Grid view (Plugins, Themes) ──────────────────────────────────────────
+   Rows used to keep their collapsed height, so an expanded card's settings
+   were clipped and its neighbour stretched with it. Rows now fit their
+   content, an expanded card takes the full width so its settings have room,
+   and the next card fills the gap it leaves. */
+#__st_root__ .st-list.sp-grid-view {
+    grid-auto-rows: max-content !important;
+    align-items: start !important;
+    grid-auto-flow: row dense !important;
+}
+#__st_root__ .st-list.sp-grid-view .st-card.expanded { grid-column: 1 / -1 !important; }
+#__st_root__ .st-list.sp-grid-view .st-card.expanded .st-card-desc { display: block !important; }
+#__st_root__ .st-card.expanded .st-settings-panel { max-height: 1600px !important; }

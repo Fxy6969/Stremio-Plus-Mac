@@ -1,6 +1,16 @@
 <RCC>
     <qresource prefix="/">
         <file>main.qml</file>
+        <file>shell-bridge.js</file>
+        <file>stremio-plus/host.js</file>
+        <file>stremio-plus/panel.js</file>
+        <file>stremio-plus/skin.css</file>
+        <file>stremio-plus/widgets.js</file>
+        <file>stremio-plus/color-picker.js</file>
+        <file>stremio-plus/runtime.js</file>
+        <file>stremio-plus/commands.js</file>
+        <file>stremio-plus/tools.js</file>
+        <file>stremio-plus/settings.js</file>
         <file alias="/images/stremio.png">../images/stremio.png</file>
         <file alias="/images/stremio_window.png">../images/stremio_window.png</file>
         <file alias="/images/stremio_tray_white.png">../images/stremio_tray_white.png</file>
