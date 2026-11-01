@@ -1,7 +1,7 @@
 /**
  * @name Modern Glass
  * @description A theme that takes advantage of Modern Glass Styles with Light and Dark Theme.
- * @version 26.0.2
+ * @version 26.0.3
  * @updateUrl https://github.com/Fxy6969/Streamio-Glass-Theme/tree/cover
  * @author Fxy
  */
@@ -530,6 +530,15 @@ html body {
     overflow: visible;
     padding: 0;
     position: relative;
+}
+
+/* No titles under posters: the artwork already says what it is (hovering a
+   poster still shows its name). Continue Watching keeps its progress bar. */
+[class*="meta-item-container"] [class*="title-bar-container"] > *:not([class*="progress-bar-layer"]) {
+    display: none !important;
+}
+[class*="meta-item-container"] [class*="title-bar-container"]:not(:has(> [class*="progress-bar-layer"])) {
+    display: none !important;
 }
 
 /* progress-bar container */
